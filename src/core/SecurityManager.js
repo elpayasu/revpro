@@ -49,15 +49,30 @@ class SecurityManager {
     getRawBody(req, { length: max, limit: max }).then(buf => { req.rawBody = buf; next(); }).catch(err => { next(); });
   }
 
-  wafMiddleware(req, res, next) {
-    try {
-      if (WAF.inspect(req)) { res.statusCode = 403; res.end('Forbidden'); return; }
-    } catch (e) {
-      logger.error('WAF inspection failed', { err: e && e.message });
-    }
-    HeaderSanitizer.sanitize(req);
-    next();
-  }
+	wafMiddleware(req, res, next) {
+	  try {
+		HeaderSanitizer.sanitize(req);
+
+		const SignatureBlocker = require('../security/signatureBlocker');
+		if (SignatureBlocker.blocked(req)) {
+		  logger.warn('Blocked malicious signature', { headers: req.headers });
+		  res.statusCode = 403;
+		  res.end('Forbidden');
+		  return;
+		}
+
+		if (WAF.inspect(req)) {
+		  res.statusCode = 403;
+		  res.end('Forbidden');
+		  return;
+		}
+
+	  } catch (e) {
+		logger.error('WAF inspection failed', { err: e && e.message });
+	  }
+
+	  next();
+	}
 }
 
 module.exports = SecurityManager;
