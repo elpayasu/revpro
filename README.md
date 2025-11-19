@@ -228,7 +228,7 @@ https: {
 
 ## Test Example
 
-```
+```js
 const { createProxy } = require("revpro");
 
 // proxy configuration
