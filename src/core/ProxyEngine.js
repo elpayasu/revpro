@@ -33,7 +33,6 @@ function createProxy(userOptions = {}) {
 
   if (opts.trustProxy) app.set('trust proxy', true);
 
-  // security middlewares
   app.use((req, res, next) => securityManager.rateLimiterMiddleware(req, res, next));
   app.use((req, res, next) => securityManager.ipFilterMiddleware(req, res, next));
   app.use((req, res, next) => securityManager.basicAuthMiddleware(req, res, next));
@@ -41,7 +40,14 @@ function createProxy(userOptions = {}) {
   app.use((req, res, next) => securityManager.bodyLimitMiddleware(req, res, next));
   app.use((req, res, next) => securityManager.wafMiddleware(req, res, next));
 
-  pluginSystem.applyMiddlewares(app);
+  try {
+    pluginSystem.applyMiddlewares(app);
+  } catch (err) {
+    logger.error('PluginSystem applyMiddlewares error', {
+      message: err.message,
+      stack: err.stack
+    });
+  }
 
   const healthPath = opts.healthCheckPath || '/healthz';
 
@@ -59,10 +65,11 @@ function createProxy(userOptions = {}) {
       })),
     });
   });
-  
+
   app.use((req, res) => {
     let upstream = upstreamManager.pick();
     if (!upstream || !upstream.url) {
+      logger.warn('No upstream available for request', { url: req.url });
       res.statusCode = 502;
       return res.end('Bad Gateway - No upstream available');
     }
@@ -71,18 +78,29 @@ function createProxy(userOptions = {}) {
     const proxyOpts = { target, changeOrigin: true, preserveHeaderKeyCase: true };
 
     proxyServer.web(req, res, proxyOpts, (err) => {
-      logger.error('Proxy error', { message: err?.message, target });
+      logger.error('Proxy error', {
+        message: err?.message,
+        stack: err?.stack,
+        request: { method: req.method, url: req.url },
+        target
+      });
       upstreamManager.markUnhealthy(upstream.url);
 
       const fallback = upstreamManager.list().find(n => n.healthy && n.url !== upstream.url);
       if (!fallback) {
+        logger.error('No healthy fallback upstream available', { url: req.url });
         res.statusCode = 502;
         return res.end('Bad Gateway - No healthy upstream');
       }
 
       target = fallback.url;
       proxyServer.web(req, res, { target, changeOrigin: true }, (err2) => {
-        logger.error('Fallback proxy error', { message: err2?.message, target });
+        logger.error('Fallback proxy error', {
+          message: err2?.message,
+          stack: err2?.stack,
+          request: { method: req.method, url: req.url },
+          target
+        });
         res.statusCode = 502;
         res.end('Bad Gateway - Fallback failed');
       });

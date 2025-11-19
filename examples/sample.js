@@ -7,7 +7,7 @@ const proxy = createProxy({
 
   // upstream servers
   upstreams: [
-    { url: "http://localhost:3001", priority: 1 },
+    { url: "http://localhost:9000", priority: 1 },
     { url: "http://localhost:3002", priority: 2 }
   ],
 
@@ -60,5 +60,4 @@ async function waitForHealthy() {
 (async () => {
   proxy.start();
   await waitForHealthy();
-  console.log("Reverse Proxy running on port 8080");
 })();

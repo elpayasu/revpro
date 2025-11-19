@@ -2,13 +2,43 @@ const { logger } = require('../utils/logger');
 
 class ErrorHandler {
   static handle(err, req, res, next) {
-    logger.error('Unhandled error', { err: err && (err.stack || err.message) });
     try {
+      const error = err instanceof Error ? err : new Error(String(err));
+
+      logger.error('Unhandled error', {
+        message: error.message,
+        stack: error.stack,
+        path: req.url,
+        method: req.method,
+        headers: req.headers
+      });
+
       if (!res.headersSent) {
-        res.statusCode = err && err.statusCode ? err.statusCode : 500;
-        res.end(err && err.message ? err.message : 'Internal Server Error');
+        const statusCode = error.statusCode && Number.isInteger(error.statusCode) ? error.statusCode : 500;
+        const responseBody = {
+          success: false,
+          error: {
+            message: statusCode === 500 ? 'Internal Server Error' : error.message,
+            code: statusCode
+          }
+        };
+
+        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(responseBody));
       }
-    } catch (e) {}
+    } catch (handlerError) {
+      logger.error('Error in ErrorHandler', {
+        message: handlerError.message,
+        stack: handlerError.stack
+      });
+
+      try {
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: { message: 'Internal Server Error', code: 500 } }));
+        }
+      } catch (_) {}
+    }
   }
 }
 

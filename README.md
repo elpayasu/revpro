@@ -291,6 +291,5 @@ async function waitForHealthy() {
 (async () => {
   proxy.start();
   await waitForHealthy();
-  console.log("Reverse Proxy running on port 8080");
 })();
 ```
