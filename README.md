@@ -1,5 +1,7 @@
 # RevPro
 
+<center><img src="./ss.png" alt="RevPro" /></center>
+
 RevPro is a reverse-proxy to efficiently route and manage application traffic.
 It supports multiple upstreams, health checks, failover, rate limiting, IP filtering, Basic Auth, CORS, body limits, WAF, plugins, and HTTPS.
 
@@ -77,7 +79,7 @@ const proxy = createProxy({
 
 ```js
 upstreams: [
-  { url: 'http://localhost:9000', priority: 1, weight: 3 },
+  { url: 'http://localhost:3001', priority: 1, weight: 3 },
   { url: 'http://localhost:3002', priority: 2, weight: 1 }
 ]
 ```
@@ -224,7 +226,7 @@ const proxy = createProxy({
 
   // Upstream backend servers
   upstreams: [
-    { url: "http://localhost:9000", priority: 1 },
+    { url: "http://localhost:3001", priority: 1 },
     { url: "http://localhost:3002", priority: 2 }
   ],
 

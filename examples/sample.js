@@ -7,7 +7,7 @@ const proxy = createProxy({
 
   // Upstream backend servers
   upstreams: [
-    { url: "http://localhost:9000", priority: 1 },
+    { url: "http://localhost:3001", priority: 1 },
     { url: "http://localhost:3002", priority: 2 }
   ],
 
