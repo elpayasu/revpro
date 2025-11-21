@@ -6,13 +6,11 @@ const path = require('path');
 const httpProxy = require('http-proxy');
 const helmet = require('helmet');
 const morgan = require('morgan');
-
 const UpstreamManager = require('./UpstreamManager');
 const SecurityManager = require('./SecurityManager');
 const ErrorHandler = require('./ErrorHandler');
 const PluginSystem = require('./PluginSystem');
 const { logger } = require('../utils/logger');
-
 const trustProxy = require('../middleware/system/trustProxy');
 const disablePoweredBy = require('../middleware/system/disablePoweredBy');
 const { probe } = require('../network/upstreamProbe');
@@ -41,8 +39,11 @@ function createProxy(userOptions = {}) {
   app.use((req, res, next) => securityManager.bodyLimitMiddleware(req, res, next));
   app.use((req, res, next) => securityManager.wafMiddleware(req, res, next));
 
-  try { pluginSystem.applyMiddlewares(app); } 
-  catch (err) { logger.error('PluginSystem applyMiddlewares error', { message: err.message, stack: err.stack }); }
+  try {
+    pluginSystem.applyMiddlewares(app);
+  } catch (err) {
+    logger.error('PluginSystem applyMiddlewares error', { message: err.message, stack: err.stack });
+  }
 
   const healthPath = opts.healthCheckPath || '/healthz';
   app.get('/__proxy__/status', (req, res) => res.json({ ok: true, upstreams: upstreamManager.list() }));
@@ -59,25 +60,43 @@ function createProxy(userOptions = {}) {
     });
   });
 
+  function sendJsonError(res, message, code = 502) {
+    if (!res.headersSent) {
+      res.writeHead(code, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: { message, code } }));
+    }
+  }
+
   app.use((req, res) => {
     let upstream = upstreamManager.pick();
+
     if (!upstream?.url) {
       logger.warn('No upstream available', { url: req.url });
-      res.statusCode = 502; return res.end('Bad Gateway - No upstream available');
+      return sendJsonError(res, 'No upstream available', 502);
     }
 
     let target = upstream.url;
+
     proxyServer.web(req, res, { target, changeOrigin: true, preserveHeaderKeyCase: true }, (err) => {
       logger.error('Proxy error', { message: err?.message, stack: err?.stack, request: { method: req.method, url: req.url }, target });
       upstreamManager.markUnhealthy(upstream.url);
 
       const fallback = upstreamManager.list().find(u => u.healthy && u.url !== upstream.url);
-      if (!fallback) { res.statusCode = 502; return res.end('Bad Gateway - No healthy upstream'); }
+      if (!fallback) {
+        return sendJsonError(res, 'No healthy upstream available', 502);
+      }
 
       target = fallback.url;
+
       proxyServer.web(req, res, { target, changeOrigin: true }, (err2) => {
-        logger.error('Fallback proxy error', { message: err2?.message, stack: err2?.stack, request: { method: req.method, url: req.url }, target });
-        res.statusCode = 502; res.end('Bad Gateway - Fallback failed');
+        logger.error('Fallback proxy error', {
+          message: err2?.message,
+          stack: err2?.stack,
+          request: { method: req.method, url: req.url },
+          target
+        });
+
+        return sendJsonError(res, 'Fallback failed', 502);
       });
     });
   });
@@ -103,7 +122,9 @@ function createProxy(userOptions = {}) {
 
   function stop() {
     if (!server) return;
-    server.close(); upstreamManager.stop(); server = null;
+    server.close();
+    upstreamManager.stop();
+    server = null;
   }
 
   return { start, stop, _internal: { app, upstreamManager, securityManager, pluginSystem } };

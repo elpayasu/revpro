@@ -1,8 +1,8 @@
-const basicAuth = require('basic-auth');
 const RateLimiter = require('../middleware/security/rateLimiter');
 const IPFilter = require('../middleware/security/ipFilter');
 const corsMiddlewareFactory = require('../middleware/security/cors');
 const bodyLimitFactory = require('../middleware/security/bodyLimit');
+const basicAuthMiddlewareFactory = require('../middleware/security/basicAuth');
 const WAF = require('../security/waf');
 const HeaderSanitizer = require('../security/headerSanitizer');
 const SignatureBlocker = require('../security/signatureBlocker');
@@ -16,6 +16,14 @@ class SecurityManager {
     this.ipFilter = new IPFilter({ whitelist: opts.ipWhitelist || [], blacklist: opts.ipBlacklist || [] });
     this.corsMiddlewareInstance = corsMiddlewareFactory(opts);
     this.bodyLimitMiddlewareInstance = bodyLimitFactory(opts);
+    this.basicAuthMiddleware = basicAuthMiddlewareFactory(opts);
+  }
+
+  sendJsonError(res, message, code = 400) {
+    if (!res.headersSent) {
+      res.writeHead(code, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: { message, code } }));
+    }
   }
 
   rateLimiterMiddleware(req, res, next) {
@@ -36,22 +44,6 @@ class SecurityManager {
     }
   }
 
-  basicAuthMiddleware(req, res, next) {
-    try {
-      if (!this.opts.auth) return next();
-      const user = basicAuth(req) || {};
-      if (user.name === this.opts.auth.username && user.pass === this.opts.auth.password) return next();
-
-      logger.warn('Unauthorized access attempt', { ip: req.ip || req.socket.remoteAddress, url: req.url, username: user.name });
-      res.setHeader('WWW-Authenticate', `Basic realm="${this.opts.auth.realm || 'Protected'}"`); // ganti juga
-      res.statusCode = 401;
-      res.end('Unauthorized');
-    } catch (err) {
-      logger.error('Auth middleware error', { err: err.message, ip: req.ip || req.socket.remoteAddress, url: req.url });
-      next(err);
-    }
-  }
-
   corsMiddleware(req, res, next) {
     try {
       this.corsMiddlewareInstance(req, res, next);
@@ -63,8 +55,8 @@ class SecurityManager {
 
   bodyLimitMiddleware(req, res, next) {
     const max = this.opts.maxBodyBytes || 2 * 1024 * 1024;
-
     const skipPaths = this.opts.bodyLimitSkipPaths || ['/healthz', '/__proxy__/status'];
+
     if (skipPaths.includes(req.path) || !['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
       return next();
     }
@@ -72,9 +64,7 @@ class SecurityManager {
     const contentLength = req.headers['content-length'] || 0;
     if (Number(contentLength) > max) {
       logger.warn('Payload Too Large', { ip: req.ip || req.socket.remoteAddress, url: req.url, contentLength });
-      res.statusCode = 413;
-      res.end('Payload Too Large');
-      return;
+      return this.sendJsonError(res, 'Payload Too Large', 413);
     }
 
     if (Number(contentLength) === 0) return next();
@@ -84,14 +74,12 @@ class SecurityManager {
       if (result && typeof result.then === 'function') {
         result.catch(err => {
           logger.warn('Invalid Body', { err: err.message, ip: req.ip || req.socket.remoteAddress, url: req.url });
-          res.statusCode = 400;
-          res.end('Invalid Body');
+          return this.sendJsonError(res, 'Invalid Body', 400);
         });
       }
     } catch (err) {
       logger.warn('Body limit middleware error', { err: err.message, ip: req.ip || req.socket.remoteAddress, url: req.url });
-      res.statusCode = 400;
-      res.end('Invalid Body');
+      return this.sendJsonError(res, 'Invalid Body', 400);
     }
   }
 
@@ -101,18 +89,13 @@ class SecurityManager {
 
       if (SignatureBlocker.blocked(req)) {
         logger.warn('Blocked malicious signature', { ip: req.ip || req.socket.remoteAddress, url: req.url, headers: req.headers });
-        res.statusCode = 403;
-        res.end('Forbidden');
-        return;
+        return this.sendJsonError(res, 'Forbidden', 403);
       }
 
       if (WAF.inspect(req)) {
         logger.warn('Blocked request by WAF', { ip: req.ip || req.socket.remoteAddress, url: req.url });
-        res.statusCode = 403;
-        res.end('Forbidden');
-        return;
+        return this.sendJsonError(res, 'Forbidden', 403);
       }
-
     } catch (err) {
       logger.error('WAF inspection failed', { err: err.message, ip: req.ip || req.socket.remoteAddress, url: req.url });
     }
