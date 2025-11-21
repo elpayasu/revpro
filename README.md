@@ -235,7 +235,7 @@ https: {
 
 ## Full Example
 
-```
+```js
 const { createProxy } = require("@fhylabs/revpro");
 
 // Create a proxy instance with configuration
