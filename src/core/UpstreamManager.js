@@ -11,6 +11,8 @@ class UpstreamManager extends EventEmitter {
     this.nodes = (Array.isArray(upstreams) ? upstreams : []).map(u => ({
       url: u.url,
       priority: u.priority || 1,
+      weight: u.weight || 1,
+      currentWeight: 0,
       healthy: true
     }));
     this.hcTimer = null;
@@ -18,8 +20,13 @@ class UpstreamManager extends EventEmitter {
 
   start() {
     this.runHealthChecks();
-    this.hcTimer = setInterval(() => this.runHealthChecks(), this.opts.healthCheckInterval || 15000);
-    logger.info('UpstreamManager started', { nodes: this.nodes.map(n => n.url) });
+    this.hcTimer = setInterval(
+      () => this.runHealthChecks(),
+      this.opts.healthCheckInterval || 15000
+    );
+    logger.info('UpstreamManager started', {
+      nodes: this.nodes.map(n => n.url)
+    });
   }
 
   stop() {
@@ -34,6 +41,7 @@ class UpstreamManager extends EventEmitter {
     return this.nodes.map(n => ({
       url: n.url,
       priority: n.priority,
+      weight: n.weight,
       healthy: n.healthy
     }));
   }
@@ -44,9 +52,37 @@ class UpstreamManager extends EventEmitter {
       logger.warn('No upstream healthy available');
       return null;
     }
-    healthyNodes.sort((a, b) => a.priority - b.priority);
-    return healthyNodes[0];
+
+    const grouped = {};
+    for (const n of healthyNodes) {
+      grouped[n.priority] ??= [];
+      grouped[n.priority].push(n);
+    }
+
+    const bestPriority = Math.min(...Object.keys(grouped));
+    const nodes = grouped[bestPriority];
+
+    if (nodes.length === 1) {
+      return nodes[0];
+    }
+
+    let totalWeight = 0;
+    let best = null;
+
+    for (const n of nodes) {
+      n.currentWeight += n.weight;
+      totalWeight += n.weight;
+
+      if (!best || n.currentWeight > best.currentWeight) {
+        best = n;
+      }
+    }
+
+    best.currentWeight -= totalWeight;
+
+    return best;
   }
+
 
   markUnhealthy(url, reason = 'unknown') {
     const node = this.nodes.find(n => n.url === url);
@@ -84,14 +120,19 @@ class UpstreamManager extends EventEmitter {
         res.resume();
 
         if (!wasHealthy && nowHealthy) {
-          logger.info('Upstream recovered from unhealthy', { url: n.url, statusCode: res.statusCode });
+          logger.info('Upstream recovered from unhealthy', {
+            url: n.url,
+            statusCode: res.statusCode
+          });
           this.emit('upstream:back', n.url);
         } else if (!nowHealthy && wasHealthy) {
           this.markUnhealthy(n.url, `statusCode ${res.statusCode}`);
         }
       });
 
-      req.on('error', (err) => this.markUnhealthy(n.url, `error: ${err.message}`));
+      req.on('error', (err) =>
+        this.markUnhealthy(n.url, `error: ${err.message}`)
+      );
       req.on('timeout', () => {
         req.destroy();
         this.markUnhealthy(n.url, 'timeout');

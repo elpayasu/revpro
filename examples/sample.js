@@ -7,8 +7,8 @@ const proxy = createProxy({
 
   // Upstream backend servers
   upstreams: [
-    { url: "https://fhylabs.com", priority: 1 },
-    { url: "http://localhost:3002", priority: 2 }
+    { url: "http://localhost:3001", priority: 1, weight: 1 },
+    { url: "http://localhost:3002", priority: 2, weight: 1 }
   ],
 
   // Logging configuration
@@ -38,7 +38,10 @@ const proxy = createProxy({
   https: { enabled: false, key: null, cert: null },
 
   // Enable trust proxy
-  trustProxy: true
+  trustProxy: true,
+  
+  // Enable dashboard monitoring
+  dashboard: true
 });
 
 // Helper function to wait until at least one upstream is healthy

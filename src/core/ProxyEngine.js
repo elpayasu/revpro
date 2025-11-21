@@ -15,6 +15,7 @@ const trustProxy = require('../middleware/system/trustProxy');
 const disablePoweredBy = require('../middleware/system/disablePoweredBy');
 const { probe } = require('../network/upstreamProbe');
 const { resolve: dnsResolve } = require('../network/dnsResolver');
+const DashboardPages = require('../../resource/dashboard/Pages');
 
 function createProxy(userOptions = {}) {
   const opts = Object.assign({}, userOptions);
@@ -46,19 +47,43 @@ function createProxy(userOptions = {}) {
   }
 
   const healthPath = opts.healthCheckPath || '/healthz';
-  app.get('/__proxy__/status', (req, res) => res.json({ ok: true, upstreams: upstreamManager.list() }));
-  app.get(healthPath, async (req, res) => {
-    const upstreams = upstreamManager.list();
-    await Promise.all(upstreams.map(async (u) => {
-      const healthy = await probe(u.url, '/', opts.healthCheckTimeout);
-      u.healthy = healthy;
-    }));
-    const allHealthy = upstreams.every(u => u.healthy);
-    res.status(allHealthy ? 200 : 503).json({
-      ok: allHealthy,
-      upstreams: upstreams.map(u => ({ url: u.url, healthy: u.healthy })),
+  app.get('/__proxy__/status', (req, res) => {
+   res.json({
+      ok: true,
+      upstreams: upstreamManager.list().map(u => ({
+        url: u.url,
+        priority: u.priority,
+        weight: u.weight,
+        healthy: u.healthy
+      }))
     });
   });
+
+  app.get(healthPath, async (req, res) => {
+    const upstreams = upstreamManager.list();
+    const allHealthy = upstreams.every(u => u.healthy);
+
+    res.status(allHealthy ? 200 : 503).json({
+      ok: allHealthy,
+      upstreams: upstreams.map(u => ({
+        url: u.url,
+        priority: u.priority,
+        weight: u.weight,
+        healthy: u.healthy
+      }))
+    });
+  });
+
+  if (opts.dashboard) {
+    app.get("/__proxy__/dashboard", async (req, res) => {
+      try {
+        await DashboardPages.dashboardPage(req, res, upstreamManager, opts);
+      } catch (err) {
+        logger.error("Dashboard error", err);
+          res.status(500).send("Dashboard failed to load");
+      }
+    });
+  }
 
   function sendJsonError(res, message, code = 502) {
     if (!res.headersSent) {

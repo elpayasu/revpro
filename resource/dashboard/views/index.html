@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RevPro Monitoring</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+	* {
+	  margin: 0;
+	  padding: 0;
+	}
+    body {
+      background-color: #ffffff;
+      font-family: Arial, sans-serif;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    thead {
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+
+    th {
+      padding: 16px 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 16px 20px;
+      font-size: 0.875rem;
+      color: #4b5563;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tr:hover {
+      background-color: #f9fafb;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-green {
+      color: #047857;
+    }
+    .badge-red {
+      color: #b91c1c;
+    }
+
+    @media (max-width: 640px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      tr {
+        margin-bottom: 12px;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        padding: 8px;
+      }
+      td {
+        border: none;
+        padding: 6px 8px;
+        position: relative;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+        display: block;
+        margin-bottom: 4px;
+      }
+      thead {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <table>
+    <thead>
+      <tr>
+        <th>Upstream</th>
+        <th>Priority</th>
+        <th>Weight</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{upstreamRows}}
+    </tbody>
+  </table>
+</body>
+</html>

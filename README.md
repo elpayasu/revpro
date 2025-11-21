@@ -47,6 +47,7 @@ pm2 start examples.js --name revpro
 | `healthCheckInterval` | `number`                  | `5000`              | Interval in ms to perform health checks                             |
 | `healthCheckTimeout`  | `number`                  | `2000`              | Timeout for health check probe requests                             |
 | `trustProxy`          | `boolean`                 | false               | Enable trust proxy headers                                          |
+| `dashboard`           | `boolean`                 | false               | Enable dashboard monitoring, `/__proxy__/dashboard`                 |
 
 **Example: Proxy Config**
 
@@ -62,6 +63,7 @@ const proxy = createProxy({
   healthCheckInterval: 3000,
   healthCheckTimeout: 2000,
   trustProxy: true
+  dashboard: true
 });
 ```
 
@@ -80,7 +82,7 @@ const proxy = createProxy({
 ```js
 upstreams: [
   { url: 'http://localhost:3001', priority: 1, weight: 3 },
-  { url: 'http://localhost:3002', priority: 2, weight: 1 }
+  { url: 'http://localhost:3002', priority: 2, weight: 2 }
 ]
 ```
 
@@ -245,8 +247,8 @@ const proxy = createProxy({
 
   // Upstream backend servers
   upstreams: [
-    { url: "https://fhylabs.com", priority: 1 },
-    { url: "http://localhost:3002", priority: 2 }
+    { url: "https://fhylabs.com", priority: 1, weight : 1 },
+    { url: "http://localhost:3002", priority: 2, weight : 1 }
   ],
 
   // Logging configuration
@@ -277,6 +279,9 @@ const proxy = createProxy({
 
   // Enable trust proxy
   trustProxy: true
+  
+  // Enable dashboard monitoring
+  dashboard: true
 });
 
 // Helper function to wait until at least one upstream is healthy
